@@ -82,7 +82,7 @@ namespace Adamski11.EnumGenerator
         }
 #endif
 
-        public static T EnumToString<T>(string value, T defaultValue) where T : struct, IConvertible
+        public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible
         {
             if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
             if (string.IsNullOrEmpty(value)) return defaultValue;
@@ -94,7 +94,7 @@ namespace Adamski11.EnumGenerator
             return defaultValue;
         }
 
-        public static string StringToEnum<T>(string value)
+        public static string EnumToString<T>(T value)
         {
             string stringValue = Enum.GetName(typeof(T), value);
             return stringValue.Replace(whiteSpaceReplacement, ' ');
