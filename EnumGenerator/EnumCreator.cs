@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,10 +17,11 @@ namespace Adamski11.EnumGenerator
 
     public class EnumCreator : MonoBehaviour
     {
-        public string teamName = "ExampleTeam";
+        public static char whiteSpaceReplacement = '_';
+        
+        public string namespaceName = "ExampleTeam";
         [Tooltip("Must start with \"Assets\"")]
-        public string filePathOverride;
-
+        public string filePathOverride = "\"Assets\"";
         public EnumInfo[] enumInfo;
         public EnumContainer[] enumContainers;
 
@@ -48,7 +50,7 @@ namespace Adamski11.EnumGenerator
                 enumFile.WriteLine("using System.Collections;");
                 enumFile.WriteLine("");
 
-                enumFile.WriteLine("namespace " + teamName + ".Enums {");
+                enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
@@ -58,14 +60,14 @@ namespace Adamski11.EnumGenerator
                 {
                     enumsToGenerate.AddRange(enumContainers[i].GetEnums().ToList());
                 }
-
+                
                 for (int i = 0; i < enumsToGenerate.Count; i++)
                 {
                     enumFile.WriteLine("[System.Serializable]");
-                    enumFile.WriteLine("public enum " + enumsToGenerate[i]._name + " {");
+                    enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
                     for (int j = 0; j < enumsToGenerate[i]._values.Length; j++)
                     {
-                        enumFile.WriteLine(enumsToGenerate[i]._values[j] + ",");
+                        enumFile.WriteLine(enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement) + ",");
                     }
 
                     enumFile.WriteLine("}");
@@ -79,11 +81,34 @@ namespace Adamski11.EnumGenerator
 
         }
 #endif
+
+        public static T EnumToString<T>(string value, T defaultValue) where T : struct, IConvertible
+        {
+            if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
+            if (string.IsNullOrEmpty(value)) return defaultValue;
+
+            foreach (T item in Enum.GetValues(typeof(T)))
+            {
+                if (item.ToString().ToLower().Equals(value.Trim().ToLower())) return item;
+            }
+            return defaultValue;
+        }
+
+        public static string StringToEnum<T>(string value)
+        {
+            string stringValue = Enum.GetName(typeof(T), value);
+            return stringValue.Replace(whiteSpaceReplacement, ' ');
+        }
     }
 
     public abstract class EnumContainer : MonoBehaviour
     {
         public abstract EnumInfo[] GetEnums();
+
+        
     }
+
+    public abstract class EnumConverter { };
+
 
 }
