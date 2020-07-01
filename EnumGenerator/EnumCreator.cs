@@ -18,7 +18,7 @@ namespace Adamski11.EnumGenerator
     public class EnumCreator : MonoBehaviour
     {
         public static char whiteSpaceReplacement = '_';
-        
+
         public string namespaceName = "ExampleTeam";
         [Tooltip("Must start with \"Assets\"")]
         public string filePathOverride = "\"Assets\"";
@@ -32,15 +32,15 @@ namespace Adamski11.EnumGenerator
         {
             string fileName = "GeneratedEnums";
 
-            string GetfilePathOverride()
+            string GetFilePathOverride()
             {
-                if (filePathOverride.Last() == '/')
+                if (filePathOverride.Last() == '/' || filePathOverride.Last() == '\'')
                     return filePathOverride;
                 else
                     return filePathOverride + "/";
             }
 
-            string copyPath = filePathOverride == "" ? "Assets/" + fileName + ".cs" : GetfilePathOverride() + fileName + ".cs";
+            string copyPath = filePathOverride == "" ? "Assets/" + fileName + ".cs" : GetFilePathOverride() + fileName + ".cs";
             Debug.Log("Creating Classfile: " + copyPath);
 
             using (StreamWriter enumFile =
@@ -49,7 +49,7 @@ namespace Adamski11.EnumGenerator
                 enumFile.WriteLine("using UnityEngine;");
                 enumFile.WriteLine("using System.Collections;");
                 enumFile.WriteLine("");
-
+                enumFile.WriteLine("//This class is auto-generated, please do not edit it as your changes will be lost");
                 enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
                 enumFile.WriteLine(" ");
 
@@ -60,7 +60,7 @@ namespace Adamski11.EnumGenerator
                 {
                     enumsToGenerate.AddRange(enumContainers[i].GetEnums().ToList());
                 }
-                
+
                 for (int i = 0; i < enumsToGenerate.Count; i++)
                 {
                     enumFile.WriteLine("[System.Serializable]");
@@ -99,13 +99,19 @@ namespace Adamski11.EnumGenerator
             string stringValue = Enum.GetName(typeof(T), value);
             return stringValue.Replace(whiteSpaceReplacement, ' ');
         }
+
+        [MenuItem("Enum Creator/Regenerate Enums %e")]
+        public static void RegenerateEnums()
+        {
+            GameObject.FindObjectOfType<EnumCreator>().CreateEnums();
+        }
     }
 
     public abstract class EnumContainer : MonoBehaviour
     {
         public abstract EnumInfo[] GetEnums();
 
-        
+
     }
 
     public abstract class EnumConverter { };
