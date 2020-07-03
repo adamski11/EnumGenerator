@@ -80,6 +80,12 @@ namespace Adamski11.EnumGenerator
             AssetDatabase.Refresh();
 
         }
+
+        [MenuItem("Enum Creator/Regenerate Enums %e")]
+        public static void RegenerateEnums()
+        {
+            GameObject.FindObjectOfType<EnumCreator>().CreateEnums();
+        }
 #endif
 
         public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible
@@ -100,11 +106,7 @@ namespace Adamski11.EnumGenerator
             return stringValue.Replace(whiteSpaceReplacement, ' ');
         }
 
-        [MenuItem("Enum Creator/Regenerate Enums %e")]
-        public static void RegenerateEnums()
-        {
-            GameObject.FindObjectOfType<EnumCreator>().CreateEnums();
-        }
+      
     }
 
     public abstract class EnumContainer : MonoBehaviour

@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Adamski11.EnumGenerator
 {
+#if UNITY_EDITOR
     [CustomEditor(typeof(EnumCreator))]
     public class EnumCreatorEditor : Editor
     {
@@ -21,4 +22,5 @@ namespace Adamski11.EnumGenerator
             }
         }
     }
+#endif
 }
