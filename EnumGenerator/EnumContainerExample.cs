@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class EnumContainerExample : EnumContainer
+public class EnumContainerExample : MonoBehaviour, IEnumContainer
 {
     public List<ObjectInfo> objectInfos = new List<ObjectInfo>();
 
-    public override EnumInfo[] GetEnums()
+    public EnumInfo[] GetEnums()
     {
         return new EnumInfo[] { new EnumInfo() { _name = "ObjectType", _values = objectInfos.Select(x => x.objectName).ToArray() } };
     }
@@ -16,7 +16,7 @@ public class EnumContainerExample : EnumContainer
 }
 
 [System.Serializable]
-public class ObjectInfo : EnumConverter
+public class ObjectInfo
 {
     public string objectName;
     public float objectValue;

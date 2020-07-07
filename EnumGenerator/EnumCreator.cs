@@ -23,8 +23,19 @@ namespace Adamski11.EnumGenerator
         [Tooltip("Must start with \"Assets\"")]
         public string filePathOverride = "\"Assets\"";
         public EnumInfo[] enumInfo;
-        public EnumContainer[] enumContainers;
 
+        //public IEnumContainer[] enumContainers;
+        public GameObject[] enumContainers;
+
+        public List<EnumValRef> createdValues = new List<EnumValRef>();
+
+        [System.Serializable]
+        public struct EnumValRef
+        {
+            public string enumName;
+            public string enumVal;
+            public int enumIntVal;
+        }
 
 #if UNITY_EDITOR
 
@@ -58,7 +69,7 @@ namespace Adamski11.EnumGenerator
 
                 for (int i = 0; i < enumContainers.Length; i++)
                 {
-                    enumsToGenerate.AddRange(enumContainers[i].GetEnums().ToList());
+                    enumsToGenerate.AddRange(enumContainers[i].GetComponent<IEnumContainer>().GetEnums().ToList());
                 }
 
                 for (int i = 0; i < enumsToGenerate.Count; i++)
@@ -67,7 +78,21 @@ namespace Adamski11.EnumGenerator
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
                     for (int j = 0; j < enumsToGenerate[i]._values.Length; j++)
                     {
-                        enumFile.WriteLine(enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement) + ",");
+                        EnumValRef enumValRef = new EnumValRef()
+                        {
+                            enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
+                            enumVal = enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement),
+                            enumIntVal = GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
+                        };
+
+                        int enumIntVal = enumValRef.enumIntVal;
+
+                        if (createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
+                            enumIntVal = createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
+                        else
+                            createdValues.Add(enumValRef);
+
+                        enumFile.WriteLine(enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement) + " = " + enumIntVal + ",");
                     }
 
                     enumFile.WriteLine("}");
@@ -79,6 +104,14 @@ namespace Adamski11.EnumGenerator
 
             AssetDatabase.Refresh();
 
+        }
+
+        private int GetEnumIntMaxVal(string enumName)
+        {
+            if (createdValues.Any(x => x.enumName == enumName))
+                return createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
+            else
+                return -1;
         }
 
         [MenuItem("Enum Creator/Regenerate Enums %e")]
@@ -106,17 +139,12 @@ namespace Adamski11.EnumGenerator
             return stringValue.Replace(whiteSpaceReplacement, ' ');
         }
 
-      
+
     }
 
-    public abstract class EnumContainer : MonoBehaviour
+    public interface IEnumContainer
     {
-        public abstract EnumInfo[] GetEnums();
-
-
+        EnumInfo[] GetEnums();
     }
-
-    public abstract class EnumConverter { };
-
 
 }
