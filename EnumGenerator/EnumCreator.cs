@@ -19,6 +19,7 @@ namespace Adamski11.EnumGenerator
     {
         public static char whiteSpaceReplacement = '_';
 
+
         public string namespaceName = "ExampleTeam";
         [Tooltip("Must start with \"Assets\"")]
         public string filePathOverride = "\"Assets\"";
@@ -78,6 +79,16 @@ namespace Adamski11.EnumGenerator
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
                     for (int j = 0; j < enumsToGenerate[i]._values.Length; j++)
                     {
+                        if (enumsToGenerate[i]._values[j].Contains("-") || enumsToGenerate[i]._values[j].Contains("-"))
+                        {
+                            Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + enumsToGenerate[i]._values[j]);
+                            enumFile.WriteLine("}");
+                            enumFile.WriteLine(" ");
+                            enumFile.WriteLine("}");
+                            AssetDatabase.Refresh();
+                            return;
+                        }
+
                         EnumValRef enumValRef = new EnumValRef()
                         {
                             enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
