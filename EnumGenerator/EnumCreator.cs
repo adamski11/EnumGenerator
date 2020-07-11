@@ -73,15 +73,20 @@ namespace Adamski11.EnumGenerator
                     enumsToGenerate.AddRange(enumContainers[i].GetComponent<IEnumContainer>().GetEnums().ToList());
                 }
 
+               
+
                 for (int i = 0; i < enumsToGenerate.Count; i++)
                 {
                     enumFile.WriteLine("[System.Serializable]");
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
-                    for (int j = 0; j < enumsToGenerate[i]._values.Length; j++)
+
+                    string[] uniqueValues = enumsToGenerate[i]._values.Distinct().ToArray();
+
+                    for (int j = 0; j < uniqueValues.Length; j++)
                     {
-                        if (enumsToGenerate[i]._values[j].Contains("-") || enumsToGenerate[i]._values[j].Contains("-"))
+                        if (uniqueValues[j].Contains("-") || uniqueValues[j].Contains("-"))
                         {
-                            Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + enumsToGenerate[i]._values[j]);
+                            Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + uniqueValues[j]);
                             enumFile.WriteLine("}");
                             enumFile.WriteLine(" ");
                             enumFile.WriteLine("}");
@@ -92,7 +97,7 @@ namespace Adamski11.EnumGenerator
                         EnumValRef enumValRef = new EnumValRef()
                         {
                             enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
-                            enumVal = enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement),
+                            enumVal = uniqueValues[j].Replace(' ', whiteSpaceReplacement),
                             enumIntVal = GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
                         };
 
@@ -103,7 +108,7 @@ namespace Adamski11.EnumGenerator
                         else
                             createdValues.Add(enumValRef);
 
-                        enumFile.WriteLine(enumsToGenerate[i]._values[j].Replace(' ', whiteSpaceReplacement) + " = " + enumIntVal + ",");
+                        enumFile.WriteLine(uniqueValues[j].Replace(' ', whiteSpaceReplacement) + " = " + enumIntVal + ",");
                     }
 
                     enumFile.WriteLine("}");
