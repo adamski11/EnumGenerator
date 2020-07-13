@@ -21,8 +21,8 @@ namespace Adamski11.EnumGenerator
 
 
         public string namespaceName = "ExampleTeam";
-        [Tooltip("Must start with \"Assets\"")]
-        public string filePathOverride = "\"Assets\"";
+        [Tooltip("Must start with Assets/")]
+        public string filePathOverride = "Assets/";
         public EnumInfo[] enumInfo;
 
         //public IEnumContainer[] enumContainers;
