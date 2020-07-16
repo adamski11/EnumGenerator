@@ -142,9 +142,12 @@ namespace Adamski11.EnumGenerator
             if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
             if (string.IsNullOrEmpty(value)) return defaultValue;
 
+
+            string replacedValue = value.Replace(' ', whiteSpaceReplacement);
+
             foreach (T item in Enum.GetValues(typeof(T)))
             {
-                if (item.ToString().ToLower().Equals(value.Trim().ToLower())) return item;
+                if (item.ToString().ToLower().Equals(replacedValue.Trim().ToLower())) return item;
             }
             return defaultValue;
         }
