@@ -94,8 +94,9 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaDirect: 0.5
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
-    m_ShowResolutionOverlay: 1
     m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -146,20 +147,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 32240554}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5727b7272f36afe44a6b9cffbe90ff5d, type: 3}
+  m_Script: {fileID: 11500000, guid: 33ff1756621e32144894670d24986374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  teamName: ExampleTeam
-  filePathOverride: 
-  enumInfo:
-  - _name: ExampleEnum
-    _values:
-    - Example1
-    - Example2
-    - Example3
-    - Example4
-  enumContainers:
-  - {fileID: 1814032602}
+  objectInfos: []
 --- !u!4 &32240556
 Transform:
   m_ObjectHideFlags: 0
@@ -200,16 +191,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1814032601}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b25757d1d291604a8e71855ab82eb8f, type: 3}
+  m_Script: {fileID: 11500000, guid: f023e38b356b58045b9a4b9b7f57109f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  exampleEnums:
-  - _name: ExampleContainerEnum
-    _values:
-    - EnumValue1
-    - EnumValue2
-    - EnumValue3
-    - EnumValue4
+  namespaceName: ExampleTeam
+  filePathOverride: Assets/
+  enumInfo: []
+  enumContainers: []
+  createdValues: []
 --- !u!4 &1814032603
 Transform:
   m_ObjectHideFlags: 0
