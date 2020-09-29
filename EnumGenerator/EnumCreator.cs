@@ -17,6 +17,7 @@ namespace Adamski11.EnumGenerator
 
     public class EnumCreator : MonoBehaviour
     {
+        public bool isPerScene = true;
         public static char whiteSpaceReplacement = '_';
 
 
@@ -43,6 +44,15 @@ namespace Adamski11.EnumGenerator
         public void CreateEnums()
         {
             string fileName = "GeneratedEnums";
+
+            if (isPerScene)
+            {
+                string[] path = EditorApplication.currentScene.Split(char.Parse("/"));
+                string[] sceneName = path[path.Length - 1].Split('.');
+                fileName = fileName + "-" + sceneName[0];
+
+            }
+
 
             string GetFilePathOverride()
             {
@@ -73,7 +83,7 @@ namespace Adamski11.EnumGenerator
                     enumsToGenerate.AddRange(enumContainers[i].GetComponent<IEnumContainer>().GetEnums().ToList());
                 }
 
-               
+
 
                 for (int i = 0; i < enumsToGenerate.Count; i++)
                 {
