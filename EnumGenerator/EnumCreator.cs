@@ -72,7 +72,10 @@ namespace Adamski11.EnumGenerator
                 enumFile.WriteLine("using System.Collections;");
                 enumFile.WriteLine("");
                 enumFile.WriteLine("//This class is auto-generated, please do not edit it as your changes will be lost");
-                enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
+
+                if (namespaceName.Count() > 0)
+                    enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
+                
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
@@ -124,8 +127,9 @@ namespace Adamski11.EnumGenerator
                     enumFile.WriteLine("}");
                     enumFile.WriteLine(" ");
                 }
-
-                enumFile.WriteLine("}");
+                
+                if (namespaceName.Count() > 0)
+                    enumFile.WriteLine("}");
             }
 
             AssetDatabase.Refresh();
