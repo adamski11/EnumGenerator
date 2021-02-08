@@ -6,7 +6,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Adamski11.EnumGenerator
+namespace BetaJester.EnumGenerator
 {
     [System.Serializable]
     public struct EnumInfo

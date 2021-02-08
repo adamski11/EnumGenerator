@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-namespace Adamski11.EnumGenerator
+namespace BetaJester.EnumGenerator
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(EnumCreator))]

@@ -1,4 +1,4 @@
-﻿using Adamski11.EnumGenerator;
+﻿using BetaJester.EnumGenerator;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
