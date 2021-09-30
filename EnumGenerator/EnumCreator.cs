@@ -39,10 +39,9 @@ namespace BetaJester.EnumGenerator
             public int enumIntVal;
         }
 
-#if UNITY_EDITOR
-
         public void CreateEnums()
         {
+#if UNITYEDITOR
             string fileName = "GeneratedEnums";
 
             if (isPerScene)
@@ -133,6 +132,7 @@ namespace BetaJester.EnumGenerator
             }
 
             AssetDatabase.Refresh();
+#endif
 
         }
 
@@ -144,6 +144,7 @@ namespace BetaJester.EnumGenerator
                 return -1;
         }
 
+#if UNITY_EDITOR
         [MenuItem("Enum Creator/Regenerate Enums %e")]
         public static void RegenerateEnums()
         {
