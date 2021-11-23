@@ -41,7 +41,7 @@ namespace BetaJester.EnumGenerator
 
         public void CreateEnums()
         {
-#if UNITYEDITOR
+#if UNITY_EDITOR
             string fileName = "GeneratedEnums";
 
             if (isPerScene)
