@@ -27,7 +27,7 @@ namespace BetaJester.EnumGenerator
         public EnumInfo[] enumInfo;
 
         //public IEnumContainer[] enumContainers;
-        public GameObject[] enumContainers;
+        public UnityEngine.Object[] enumContainers;
 
         public List<EnumValRef> createdValues = new List<EnumValRef>();
 
@@ -42,11 +42,14 @@ namespace BetaJester.EnumGenerator
         public void CreateEnums()
         {
 #if UNITY_EDITOR
+            if (enumInfo == null)
+                return;
+
             string fileName = "GeneratedEnums";
 
             if (isPerScene)
             {
-                string[] path = EditorApplication.currentScene.Split(char.Parse("/"));
+                string[] path = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name.Split(char.Parse("/"));
                 string[] sceneName = path[path.Length - 1].Split('.');
                 fileName = fileName + "-" + sceneName[0];
 
@@ -74,7 +77,7 @@ namespace BetaJester.EnumGenerator
 
                 if (namespaceName.Count() > 0)
                     enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
-                
+
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
@@ -82,7 +85,21 @@ namespace BetaJester.EnumGenerator
 
                 for (int i = 0; i < enumContainers.Length; i++)
                 {
-                    enumsToGenerate.AddRange(enumContainers[i].GetComponent<IEnumContainer>().GetEnums().ToList());
+                    ScriptableObject so = enumContainers[i] as ScriptableObject;
+
+                    IEnumContainer enumContainer = so as IEnumContainer;
+
+
+                    if (enumContainer == null)
+                    {
+                        GameObject enumGO = enumContainers[i] as GameObject;
+
+                        enumsToGenerate.AddRange(enumGO.GetComponent<IEnumContainer>().GetEnums().ToList());
+                    }
+                    else
+                    {
+                        enumsToGenerate.AddRange(enumContainer.GetEnums().ToList());
+                    }
                 }
 
 
@@ -96,7 +113,7 @@ namespace BetaJester.EnumGenerator
 
                     for (int j = 0; j < uniqueValues.Length; j++)
                     {
-                        if (uniqueValues[j].Contains("-") || uniqueValues[j].Contains("-"))
+                        if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" }))
                         {
                             Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + uniqueValues[j]);
                             enumFile.WriteLine("}");
@@ -106,10 +123,26 @@ namespace BetaJester.EnumGenerator
                             return;
                         }
 
+                        if (uniqueValues[j] == " ")
+                        {
+                            Debug.Log("Value " + j + " is blank, skipping: " + enumsToGenerate[i]._name);
+                            continue;
+                        }
+
+                        string enumName = uniqueValues[j].Replace(' ', whiteSpaceReplacement);
+
+                        if (enumName.Length == 0)
+                            continue;
+
+                        if (int.TryParse(enumName[0].ToString(), out int _))
+                        {
+                            enumName = "_" + enumName;
+                        }
+
                         EnumValRef enumValRef = new EnumValRef()
                         {
                             enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
-                            enumVal = uniqueValues[j].Replace(' ', whiteSpaceReplacement),
+                            enumVal = enumName,
                             enumIntVal = GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
                         };
 
@@ -120,13 +153,13 @@ namespace BetaJester.EnumGenerator
                         else
                             createdValues.Add(enumValRef);
 
-                        enumFile.WriteLine(uniqueValues[j].Replace(' ', whiteSpaceReplacement) + " = " + enumIntVal + ",");
+                        enumFile.WriteLine(enumName + " = " + enumIntVal + ",");
                     }
 
                     enumFile.WriteLine("}");
                     enumFile.WriteLine(" ");
                 }
-                
+
                 if (namespaceName.Count() > 0)
                     enumFile.WriteLine("}");
             }
@@ -173,6 +206,16 @@ namespace BetaJester.EnumGenerator
             return stringValue.Replace(whiteSpaceReplacement, ' ');
         }
 
+        public static bool ContainsAny(string haystack, params string[] needles)
+        {
+            foreach (string needle in needles)
+            {
+                if (haystack.Contains(needle))
+                    return true;
+            }
+
+            return false;
+        }
 
     }
 
@@ -180,5 +223,6 @@ namespace BetaJester.EnumGenerator
     {
         EnumInfo[] GetEnums();
     }
+
 
 }
