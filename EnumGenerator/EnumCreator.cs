@@ -15,19 +15,16 @@ namespace BetaJester.EnumGenerator
         public string[] _values;
     }
 
-    public class EnumCreator : MonoBehaviour
+    [CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
+    public class EnumCreator : ScriptableObject
     {
-        public bool isPerScene = true;
         public static char whiteSpaceReplacement = '_';
 
 
-        public string namespaceName = "ExampleTeam";
-        [Tooltip("Must start with Assets/")]
-        public string filePathOverride = "Assets/";
-        public EnumInfo[] enumInfo;
-
-        //public IEnumContainer[] enumContainers;
-        public UnityEngine.Object[] enumContainers;
+        public string namespaceName = "";
+       
+        string filePathOverride = "Assets/";
+        UnityEngine.Object[] enumContainers;
 
         public List<EnumValRef> createdValues = new List<EnumValRef>();
 
@@ -42,19 +39,17 @@ namespace BetaJester.EnumGenerator
         public void CreateEnums()
         {
 #if UNITY_EDITOR
-            if (enumInfo == null)
+         
+            EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
+
+            if (enumCreators.Count() == 0)
                 return;
 
+            string saveLocation = AssetDatabase.GetAssetPath(enumCreators.First());
+            saveLocation = saveLocation.Substring(0, saveLocation.Length - 17);
+
             string fileName = "GeneratedEnums";
-
-            if (isPerScene)
-            {
-                string[] path = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name.Split(char.Parse("/"));
-                string[] sceneName = path[path.Length - 1].Split('.');
-                fileName = fileName + "-" + sceneName[0];
-
-            }
-
+            filePathOverride = saveLocation;
 
             string GetFilePathOverride()
             {
@@ -81,7 +76,9 @@ namespace BetaJester.EnumGenerator
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
-                enumsToGenerate.AddRange(enumInfo.ToList());
+               
+                
+                enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)));
 
                 for (int i = 0; i < enumContainers.Length; i++)
                 {
@@ -181,10 +178,23 @@ namespace BetaJester.EnumGenerator
         [MenuItem("Enum Creator/Regenerate Enums %e")]
         public static void RegenerateEnums()
         {
-            GameObject.FindObjectOfType<EnumCreator>().CreateEnums();
+            GetAllInstances<EnumCreator>().First().CreateEnums();
+        }
+
+
+        public static T[] GetAllInstances<T>() where T : ScriptableObject {
+            string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);  //FindAssets uses tags check documentation for more info
+            T[] a = new T[guids.Length];
+            for (int i = 0; i < guids.Length; i++)         //probably could get optimized 
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                a[i] = AssetDatabase.LoadAssetAtPath<T>(path);
+            }
+
+            return a;
+
         }
 #endif
-
         public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible
         {
             if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
