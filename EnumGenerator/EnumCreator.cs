@@ -205,7 +205,7 @@ namespace BetaJester.EnumGenerator
 
             foreach (T item in Enum.GetValues(typeof(T)))
             {
-                if (item.ToString().ToLower().Equals(replacedValue.Trim().ToLower())) return item;
+                if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
             }
             return defaultValue;
         }
