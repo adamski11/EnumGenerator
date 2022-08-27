@@ -18,14 +18,14 @@ public class EnumObject : ScriptableObject, IEnumContainer {
 
 
     public void GenerateFromString() {
-        enumTypes = _data.Split(_splitter, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+        enumTypes = _data.Split(new string[] { _splitter }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
         for (int i = 0; i < enumTypes.Count; i++) {
             enumTypes[i] = enumTypes[i].Trim();
         }
     }
     
     public void AddFromString() {
-        enumTypes.AddRange(_data.Split(_splitter, System.StringSplitOptions.RemoveEmptyEntries));
+        enumTypes.AddRange(_data.Split(new string[] { _splitter }, System.StringSplitOptions.RemoveEmptyEntries));
         for (int i = 0; i < enumTypes.Count; i++) {
             enumTypes[i] = enumTypes[i].Trim();
         }
