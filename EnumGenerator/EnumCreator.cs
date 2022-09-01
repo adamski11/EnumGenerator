@@ -39,7 +39,6 @@ namespace BetaJester.EnumGenerator
         public void CreateEnums()
         {
 #if UNITY_EDITOR
-         
             EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
 
             if (enumCreators.Count() == 0)
@@ -50,6 +49,7 @@ namespace BetaJester.EnumGenerator
 
             string fileName = "GeneratedEnums";
             filePathOverride = saveLocation;
+
 
             string GetFilePathOverride()
             {
@@ -76,8 +76,6 @@ namespace BetaJester.EnumGenerator
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
-               
-                
                 enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)));
 
                 for (int i = 0; i < enumContainers.Length; i++)
@@ -161,6 +159,8 @@ namespace BetaJester.EnumGenerator
                     enumFile.WriteLine("}");
             }
 
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssetIfDirty(this);
             AssetDatabase.Refresh();
 #endif
 
@@ -205,7 +205,11 @@ namespace BetaJester.EnumGenerator
 
             foreach (T item in Enum.GetValues(typeof(T)))
             {
-                if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
+            #if UNITY_2021_1_OR_NEWER
+             if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
+            #else
+                if (item.ToString().ToLower().Equals(replacedValue.Trim().ToLower())) return item;
+            #endif
             }
             return defaultValue;
         }
