@@ -6,110 +6,98 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace BetaJester.EnumGenerator
-{
+namespace BetaJester.EnumGenerator {
     [System.Serializable]
-    public struct EnumInfo
-    {
+    public struct EnumInfo {
         public string _name;
-        public string[] _values;
+        public string[] _stringValues;
+        public int[] _intValues;
     }
 
     [CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
-    public class EnumCreator : ScriptableObject
-    {
+    public class EnumCreator : ScriptableObject {
         public static char whiteSpaceReplacement = '_';
 
-
-        public string namespaceName = "";
-       
-        string filePathOverride = "Assets/";
-        UnityEngine.Object[] enumContainers;
-
-        public List<EnumValRef> createdValues = new List<EnumValRef>();
-
         [System.Serializable]
-        public struct EnumValRef
-        {
+        public struct EnumValRef {
             public string enumName;
             public string enumVal;
             public int enumIntVal;
         }
 
-        public void CreateEnums()
-        {
+        [SerializeField] string _namespaceName = "";
+        [SerializeField] string _filePathOverride = "";
+        [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
+        [SerializeField, ReadOnlyInspector] UnityEngine.Object[] _enumContainers;
+
+        public void CreateEnums() {
 #if UNITY_EDITOR
-            EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
+            //EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
 
-            if (enumCreators.Count() == 0)
-                return;
+            //if (enumCreators.Count() == 0)
+            //  return;
 
-            string saveLocation = AssetDatabase.GetAssetPath(enumCreators.First());
-            saveLocation = saveLocation.Substring(0, saveLocation.Length - 17);
+            //string saveLocation = AssetDatabase.GetAssetPath(enumCreators.First());
+            //saveLocation = saveLocation.Substring(0, saveLocation.Length - 17);
 
             string fileName = "GeneratedEnums";
-            filePathOverride = saveLocation;
+
+            //string generatedFilePath = saveLocation;
 
 
-            string GetFilePathOverride()
-            {
-                if (filePathOverride.Last() == '/' || filePathOverride.Last() == '\'')
-                    return filePathOverride;
+            string GetFilePathOverride() {
+                if (_filePathOverride.Last() == '/' || _filePathOverride.Last() == '\'')
+                    return _filePathOverride;
                 else
-                    return filePathOverride + "/";
+                    return _filePathOverride + "/";
             }
 
-            string copyPath = filePathOverride == "" ? "Assets/" + fileName + ".cs" : GetFilePathOverride() + fileName + ".cs";
+
+            string copyPath = _filePathOverride == "" ? "Assets/Generated/" + fileName + ".cs" : GetFilePathOverride() + fileName + ".cs";
             Debug.Log("Creating Classfile: " + copyPath);
 
             using (StreamWriter enumFile =
-                new StreamWriter(copyPath))
-            {
+                new StreamWriter(copyPath)) {
                 enumFile.WriteLine("using UnityEngine;");
                 enumFile.WriteLine("using System.Collections;");
                 enumFile.WriteLine("");
                 enumFile.WriteLine("//This class is auto-generated, please do not edit it as your changes will be lost");
 
-                if (namespaceName.Count() > 0)
-                    enumFile.WriteLine("namespace " + namespaceName + ".Enums {");
+                if (_namespaceName.Count() > 0)
+                    enumFile.WriteLine("namespace " + _namespaceName + ".Enums {");
 
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
-                enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)));
+                _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)));
 
-                for (int i = 0; i < enumContainers.Length; i++)
-                {
-                    ScriptableObject so = enumContainers[i] as ScriptableObject;
+                for (int i = 0; i < _enumContainers.Length; i++) {
+                    ScriptableObject so = _enumContainers[i] as ScriptableObject;
 
                     IEnumContainer enumContainer = so as IEnumContainer;
 
 
-                    if (enumContainer == null)
-                    {
-                        GameObject enumGO = enumContainers[i] as GameObject;
+                    if (enumContainer == null) {
+                        GameObject enumGO = _enumContainers[i] as GameObject;
 
                         enumsToGenerate.AddRange(enumGO.GetComponent<IEnumContainer>().GetEnums().ToList());
                     }
-                    else
-                    {
+                    else {
                         enumsToGenerate.AddRange(enumContainer.GetEnums().ToList());
                     }
                 }
 
 
 
-                for (int i = 0; i < enumsToGenerate.Count; i++)
-                {
+                for (int i = 0; i < enumsToGenerate.Count; i++) {
                     enumFile.WriteLine("[System.Serializable]");
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
 
-                    string[] uniqueValues = enumsToGenerate[i]._values.Distinct().ToArray();
+                    string[] uniqueValues = enumsToGenerate[i]._stringValues.Distinct().ToArray();
+                    int[] uniqueIntValues = enumsToGenerate[i]._intValues.Distinct().ToArray();
 
-                    for (int j = 0; j < uniqueValues.Length; j++)
-                    {
-                        if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" }))
-                        {
+                    for (int j = 0; j < uniqueValues.Length; j++) {
+                        if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" })) {
                             Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + uniqueValues[j]);
                             enumFile.WriteLine("}");
                             enumFile.WriteLine(" ");
@@ -118,44 +106,42 @@ namespace BetaJester.EnumGenerator
                             return;
                         }
 
-                        if (uniqueValues[j] == " ")
-                        {
+                        if (uniqueValues[j] == " ") {
                             Debug.Log("Value " + j + " is blank, skipping: " + enumsToGenerate[i]._name);
                             continue;
                         }
 
                         string enumName = uniqueValues[j].Replace(' ', whiteSpaceReplacement);
+                        int inEnumIntVal = uniqueIntValues.Length > j ?  uniqueIntValues[j] : -1000;
+
 
                         if (enumName.Length == 0)
                             continue;
 
-                        if (int.TryParse(enumName[0].ToString(), out int _))
-                        {
+                        if (int.TryParse(enumName[0].ToString(), out int _)) {
                             enumName = "_" + enumName;
                         }
 
-                        EnumValRef enumValRef = new EnumValRef()
-                        {
+                        EnumValRef enumValRef = new EnumValRef() {
                             enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
                             enumVal = enumName,
-                            enumIntVal = GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
+                            enumIntVal = inEnumIntVal != -1000 ? inEnumIntVal : GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
                         };
 
-                        int enumIntVal = enumValRef.enumIntVal;
-
-                        if (createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
-                            enumIntVal = createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
+                    
+                        if (_createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
+                            inEnumIntVal = _createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
                         else
-                            createdValues.Add(enumValRef);
+                            _createdValues.Add(enumValRef);
 
-                        enumFile.WriteLine(enumName + " = " + enumIntVal + ",");
+                        enumFile.WriteLine(enumName + " = " + inEnumIntVal + ",");
                     }
 
                     enumFile.WriteLine("}");
                     enumFile.WriteLine(" ");
                 }
 
-                if (namespaceName.Count() > 0)
+                if (_namespaceName.Count() > 0)
                     enumFile.WriteLine("}");
             }
 
@@ -166,19 +152,27 @@ namespace BetaJester.EnumGenerator
 
         }
 
-        private int GetEnumIntMaxVal(string enumName)
-        {
-            if (createdValues.Any(x => x.enumName == enumName))
-                return createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
+        private int GetEnumIntMaxVal(string enumName) {
+            if (_createdValues.Any(x => x.enumName == enumName))
+                return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
             else
                 return -1;
         }
 
 #if UNITY_EDITOR
         [MenuItem("Enum Creator/Regenerate Enums %e")]
-        public static void RegenerateEnums()
-        {
-            GetAllInstances<EnumCreator>().First().CreateEnums();
+        public static void RegenerateEnums() {
+            EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
+
+            if (enumCreators.Count() == 0) {
+                if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
+
+                ScriptableObjectUtility.CreateAsset<EnumCreator>("Assets/Generated", "EnumCreator", (s) => { s.CreateEnums(); return true; });
+
+            }
+            else {
+                enumCreators.First().CreateEnums();
+            }
         }
 
 
@@ -195,35 +189,30 @@ namespace BetaJester.EnumGenerator
 
         }
 #endif
-        public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible
-        {
+        public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible {
             if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
             if (string.IsNullOrEmpty(value)) return defaultValue;
 
 
             string replacedValue = value.Replace(' ', whiteSpaceReplacement);
 
-            foreach (T item in Enum.GetValues(typeof(T)))
-            {
-            #if UNITY_2021_1_OR_NEWER
-             if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
-            #else
+            foreach (T item in Enum.GetValues(typeof(T))) {
+#if UNITY_2021_1_OR_NEWER
+                if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
+#else
                 if (item.ToString().ToLower().Equals(replacedValue.Trim().ToLower())) return item;
-            #endif
+#endif
             }
             return defaultValue;
         }
 
-        public static string EnumToString<T>(T value)
-        {
+        public static string EnumToString<T>(T value) {
             string stringValue = Enum.GetName(typeof(T), value);
             return stringValue.Replace(whiteSpaceReplacement, ' ');
         }
 
-        public static bool ContainsAny(string haystack, params string[] needles)
-        {
-            foreach (string needle in needles)
-            {
+        public static bool ContainsAny(string haystack, params string[] needles) {
+            foreach (string needle in needles) {
                 if (haystack.Contains(needle))
                     return true;
             }
@@ -233,8 +222,7 @@ namespace BetaJester.EnumGenerator
 
     }
 
-    public interface IEnumContainer
-    {
+    public interface IEnumContainer {
         EnumInfo[] GetEnums();
     }
 

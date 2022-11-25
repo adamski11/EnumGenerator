@@ -8,7 +8,7 @@ namespace EnumGenerator {
         public List<ObjectInfo> objectInfos = new List<ObjectInfo>();
 
         public EnumInfo[] GetEnums() {
-            return new EnumInfo[] { new EnumInfo() { _name = "ObjectType", _values = objectInfos.Select(x => x.objectName).ToArray() } };
+            return new EnumInfo[] { new EnumInfo() { _name = "ObjectType", _stringValues = objectInfos.Select(x => x.objectName).ToArray() } };
         }
 
     }
