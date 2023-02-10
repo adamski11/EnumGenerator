@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 
 namespace BetaJester.EnumGenerator {
+    
     [System.Serializable]
     public struct EnumInfo {
         public string _name;
@@ -28,7 +29,7 @@ namespace BetaJester.EnumGenerator {
         [SerializeField] string _namespaceName = "";
         [SerializeField] string _filePathOverride = "";
         [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
-        [SerializeField, ReadOnlyInspector] UnityEngine.Object[] _enumContainers;
+        [SerializeField] UnityEngine.Object[] _enumContainers;
 
         public void CreateEnums() {
 #if UNITY_EDITOR

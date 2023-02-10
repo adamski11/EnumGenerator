@@ -1,0 +1,18 @@
+{
+    "name": "EnumCreator.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:691035a37284f5741b3b57d587f7c7c5"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
