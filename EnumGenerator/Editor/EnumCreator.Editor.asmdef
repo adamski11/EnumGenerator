@@ -2,7 +2,7 @@
     "name": "EnumCreator.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:691035a37284f5741b3b57d587f7c7c5"
+        "GUID:30d238ef1b191ff409190803d7356023"
     ],
     "includePlatforms": [
         "Editor"
