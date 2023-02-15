@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 
 namespace BetaJester.EnumGenerator {
-    
+
     [System.Serializable]
     public struct EnumInfo {
         public string _name;
@@ -95,7 +95,10 @@ namespace BetaJester.EnumGenerator {
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
 
                     string[] uniqueValues = enumsToGenerate[i]._stringValues.Distinct().ToArray();
-                    int[] uniqueIntValues = enumsToGenerate[i]._intValues.Distinct().ToArray();
+                    int[] uniqueIntValues = new int[0];
+
+                    if (enumsToGenerate[i]._intValues != null)
+                        uniqueIntValues = enumsToGenerate[i]._intValues.Distinct().ToArray();
 
                     for (int j = 0; j < uniqueValues.Length; j++) {
                         if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" })) {
@@ -113,7 +116,7 @@ namespace BetaJester.EnumGenerator {
                         }
 
                         string enumName = uniqueValues[j].Replace(' ', whiteSpaceReplacement);
-                        int inEnumIntVal = uniqueIntValues.Length > j ?  uniqueIntValues[j] : -1000;
+                        int inEnumIntVal = uniqueIntValues.Length > j ? uniqueIntValues[j] : -1000;
 
 
                         if (enumName.Length == 0)
@@ -129,11 +132,14 @@ namespace BetaJester.EnumGenerator {
                             enumIntVal = inEnumIntVal != -1000 ? inEnumIntVal : GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
                         };
 
-                    
+
                         if (_createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
                             inEnumIntVal = _createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
-                        else
+                        else {
+                            inEnumIntVal = enumValRef.enumIntVal;
                             _createdValues.Add(enumValRef);
+                        }
+
 
                         enumFile.WriteLine(enumName + " = " + inEnumIntVal + ",");
                     }
