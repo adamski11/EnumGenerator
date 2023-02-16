@@ -91,6 +91,9 @@ namespace BetaJester.EnumGenerator {
 
 
                 for (int i = 0; i < enumsToGenerate.Count; i++) {
+
+                    if (enumsToGenerate[i]._name == "") continue;
+
                     enumFile.WriteLine("[System.Serializable]");
                     enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
 

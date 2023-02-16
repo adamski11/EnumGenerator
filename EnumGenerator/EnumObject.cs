@@ -29,6 +29,17 @@ public class EnumObject : ScriptableObject, IEnumContainer {
     [SerializeField] string _data;
     [SerializeField] string _splitter = ",";
 
+    [Button("Generate Unique Integer Values")]
+    public void GenerateUniqueIntegerValues() {
+        for (int i = 0; i < enumTypes.Count; i++) {
+            if (enumTypes[i].itemName == "None") enumTypes[i] = new EnumItemInfo() { itemName = "None", itemValue = (int)NONE_CASE_VALUE };
+            else if (enumTypes[i].itemName == "Special") enumTypes[i] = new EnumItemInfo() { itemName = "Special", itemValue = (int)SPECIAL_CASE_VALUE };
+            else enumTypes[i] = new EnumItemInfo() { itemName = enumTypes[i].itemName, itemValue = i };
+
+
+        }
+    }
+
 
     [Button("Generate From String")]
     public void GenerateFromString() {
