@@ -4,7 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#else
+using NaughtyAttributes;
+#endif
 
 [CreateAssetMenu(menuName = "Enum Generator/Enum Object")]
 public class EnumObject : ScriptableObject, IEnumContainer {
@@ -29,7 +33,9 @@ public class EnumObject : ScriptableObject, IEnumContainer {
     [SerializeField] string _data;
     [SerializeField] string _splitter = ",";
 
+#if ODIN_INSPECTOR
     [Button("Generate Unique Integer Values")]
+#endif
     public void GenerateUniqueIntegerValues() {
         for (int i = 0; i < enumTypes.Count; i++) {
             if (enumTypes[i].itemName == "None") enumTypes[i] = new EnumItemInfo() { itemName = "None", itemValue = (int)NONE_CASE_VALUE };
@@ -41,7 +47,9 @@ public class EnumObject : ScriptableObject, IEnumContainer {
     }
 
 
+#if ODIN_INSPECTOR
     [Button("Generate From String")]
+#endif
     public void GenerateFromString() {
         List<string> enumItems = _data.Split(new string[] { _splitter }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
 
