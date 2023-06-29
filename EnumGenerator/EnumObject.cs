@@ -37,13 +37,38 @@ public class EnumObject : ScriptableObject, IEnumContainer {
     [Button("Generate Unique Integer Values")]
 #endif
     public void GenerateUniqueIntegerValues() {
+
+
+        List<EnumItemInfo> preArrangedEnums = new List<EnumItemInfo>();
+        EnumItemInfo noneInfo = new EnumItemInfo();
+        EnumItemInfo specialInfo = new EnumItemInfo();
+        int otherIndexCount = 0;
+
         for (int i = 0; i < enumTypes.Count; i++) {
-            if (enumTypes[i].itemName == "None") enumTypes[i] = new EnumItemInfo() { itemName = "None", itemValue = (int)NONE_CASE_VALUE };
-            else if (enumTypes[i].itemName == "Special") enumTypes[i] = new EnumItemInfo() { itemName = "Special", itemValue = (int)SPECIAL_CASE_VALUE };
-            else enumTypes[i] = new EnumItemInfo() { itemName = enumTypes[i].itemName, itemValue = i };
-
-
+            if (enumTypes[i].itemName == "None") {
+                noneInfo = new EnumItemInfo() { itemName = "None", itemValue = (int)NONE_CASE_VALUE };
+                otherIndexCount++;
+            }
+            else if (enumTypes[i].itemName == "Special") {
+                specialInfo = new EnumItemInfo() { itemName = "Special", itemValue = (int)SPECIAL_CASE_VALUE };
+                otherIndexCount++;
+            }
+            else {
+                preArrangedEnums.Add(new EnumItemInfo() { itemName = enumTypes[i].itemName, itemValue = i + otherIndexCount });
+            }
         }
+
+        enumTypes.Clear();
+        enumTypes.Add(noneInfo);
+        enumTypes.AddRange(preArrangedEnums);
+        
+
+        for (int i = 0; i < enumTypes.Count; i++) {
+            enumTypes[i] = new EnumItemInfo() { itemName = enumTypes[i].itemName, itemValue = i };
+        }
+
+        enumTypes.Add(specialInfo);
+
     }
 
 
