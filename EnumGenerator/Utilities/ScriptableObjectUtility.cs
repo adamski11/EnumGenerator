@@ -139,9 +139,15 @@ namespace BetaJester.EnumGenerator {
                 for (int j = 0; j < whichImplement.Count(); j++) {
 
                     Type interfaceType = whichImplement[j];
-                    Type objectType = a.Last().GetType();
+                    if (a != null && a.Last() != null) {
+                        Type objectType = a.Last().GetType();
 
-                    if (!objectType.IsTypeOf(interfaceType)) {
+                        if (!objectType.IsTypeOf(interfaceType)) {
+                            a.RemoveAt(a.Count() - 1);
+                            break;
+                        }
+                    }
+                    else {
                         a.RemoveAt(a.Count() - 1);
                         break;
                     }

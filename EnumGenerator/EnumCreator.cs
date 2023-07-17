@@ -89,9 +89,10 @@ namespace BetaJester.EnumGenerator {
                 enumFile.WriteLine(" ");
 
                 List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
-                _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)));
+                _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)).Where(x => x != null).Select(x => x as UnityEngine.Object).ToArray());
 
                 for (int i = 0; i < _enumContainers.Length; i++) {
+                    
                     ScriptableObject so = _enumContainers[i] as ScriptableObject;
 
                     IEnumContainer enumContainer = so as IEnumContainer;
