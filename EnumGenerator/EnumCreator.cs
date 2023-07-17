@@ -16,7 +16,8 @@ namespace BetaJester.EnumGenerator {
     }
 
     [CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
-    public class EnumCreator : ScriptableObject {
+    public class EnumCreator : SingletonScriptableObject<EnumCreator> {
+#if UNITY_EDITOR
         public static char whiteSpaceReplacement = '_';
 
         [System.Serializable]
@@ -30,9 +31,26 @@ namespace BetaJester.EnumGenerator {
         [SerializeField] string _filePathOverride = "";
         [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
         [SerializeField] UnityEngine.Object[] _enumContainers;
+        [SerializeField] bool _isInitialised = false;
+
+        public void OnEnable() {
+            if (!_isInitialised) {
+                _isInitialised = true;
+                CreateEnums();
+                string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+                List<string> allDefines = definesString.Split(';').ToList();
+                allDefines.Add("ENUMS_GENERATED");
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, string.Join(";", allDefines.ToArray()));
+            }
+        }
 
         public void CreateEnums() {
-#if UNITY_EDITOR
+
+
+            if (!_isInitialised) {
+                OnEnable();
+            }
+
             //EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
 
             //if (enumCreators.Count() == 0)
@@ -44,6 +62,7 @@ namespace BetaJester.EnumGenerator {
             string fileName = "GeneratedEnums";
 
             //string generatedFilePath = saveLocation;
+
 
 
             string GetFilePathOverride() {
@@ -158,7 +177,7 @@ namespace BetaJester.EnumGenerator {
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssetIfDirty(this);
             AssetDatabase.Refresh();
-#endif
+
 
         }
 
@@ -172,17 +191,19 @@ namespace BetaJester.EnumGenerator {
 #if UNITY_EDITOR
         [MenuItem("Enum Creator/Regenerate Enums %e")]
         public static void RegenerateEnums() {
-            EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
+            //EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
 
-            if (enumCreators.Count() == 0) {
-                if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
+            //if (enumCreators.Count() == 0) {
+            //    if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
 
-                ScriptableObjectUtility.CreateAsset<EnumCreator>("Assets/Generated", "EnumCreator", (s) => { s.CreateEnums(); return true; });
+            //    ScriptableObjectUtility.CreateAsset<EnumCreator>("Assets/Generated", "EnumCreator", (s) => { s.CreateEnums(); return true; });
 
-            }
-            else {
-                enumCreators.First().CreateEnums();
-            }
+            //}
+            //else {
+            //    enumCreators.First().CreateEnums();
+            //}
+
+            EnumCreator.Instance.CreateEnums();
         }
 
 
@@ -236,5 +257,5 @@ namespace BetaJester.EnumGenerator {
         EnumInfo[] GetEnums();
     }
 
-
+#endif
 }
