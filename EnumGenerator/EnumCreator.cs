@@ -186,7 +186,6 @@ public class EnumCreator : SingletonScriptableObject<EnumCreator> {
 
 
         }
-#endif
         [MenuItem("Enum Creator/Regenerate Enums %e")]
         public static void RegenerateEnums() {
             //EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
@@ -203,6 +202,7 @@ public class EnumCreator : SingletonScriptableObject<EnumCreator> {
 
             EnumCreator.Instance.CreateEnums();
         }
+#endif
 
         
         private int GetEnumIntMaxVal(string enumName) {
