@@ -212,8 +212,8 @@ public class EnumCreator : SingletonScriptableObject<EnumCreator> {
                 return -1;
         }
 
-
-        public static T[] GetAllInstances<T>() where T : ScriptableObject {
+#if UNITY_EDITOR
+    public static T[] GetAllInstances<T>() where T : ScriptableObject {
             string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);  //FindAssets uses tags check documentation for more info
             T[] a = new T[guids.Length];
             for (int i = 0; i < guids.Length; i++)         //probably could get optimized 
