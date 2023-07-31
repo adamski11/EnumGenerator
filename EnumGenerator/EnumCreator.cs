@@ -17,8 +17,8 @@ namespace BetaJester.EnumGenerator {
 
     [CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
     public class EnumCreator : SingletonScriptableObject<EnumCreator> {
-#if UNITY_EDITOR
         public static char whiteSpaceReplacement = '_';
+
 
         [System.Serializable]
         public struct EnumValRef {
@@ -32,7 +32,7 @@ namespace BetaJester.EnumGenerator {
         [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
         [SerializeField] UnityEngine.Object[] _enumContainers;
         [SerializeField] bool _isInitialised = false;
-
+#if UNITY_EDITOR
         public void OnEnable() {
             if (!_isInitialised) {
                 _isInitialised = true;
@@ -92,7 +92,7 @@ namespace BetaJester.EnumGenerator {
                 _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)).Where(x => x != null).Select(x => x as UnityEngine.Object).ToArray());
 
                 for (int i = 0; i < _enumContainers.Length; i++) {
-                    
+
                     ScriptableObject so = _enumContainers[i] as ScriptableObject;
 
                     IEnumContainer enumContainer = so as IEnumContainer;
@@ -181,7 +181,7 @@ namespace BetaJester.EnumGenerator {
 
 
         }
-
+#endif
         private int GetEnumIntMaxVal(string enumName) {
             if (_createdValues.Any(x => x.enumName == enumName))
                 return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
@@ -257,6 +257,4 @@ namespace BetaJester.EnumGenerator {
     public interface IEnumContainer {
         EnumInfo[] GetEnums();
     }
-
-#endif
 }
