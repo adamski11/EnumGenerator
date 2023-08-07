@@ -34,7 +34,15 @@ namespace BetaJester.EnumGenerator {
         [SerializeField] bool _isInitialised = false;
 
         public void OnEnable() {
-            if (!_isInitialised) {
+
+            if (_isInitialised) {
+                string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+                List<string> allDefines = definesString.Split(';').ToList();
+                _isInitialised = allDefines.Contains("ENUMS_GENERATED");
+            }
+
+            if (!_isInitialised)
+{ 
                 _isInitialised = true;
                 CreateEnums();
                 string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
