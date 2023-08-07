@@ -3,22 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
-namespace BetaJester.EnumGenerator {
 
-    [System.Serializable]
-    public struct EnumInfo {
-        public string _name;
-        public string[] _stringValues;
-        public int[] _intValues;
-    }
+[System.Serializable]
+public struct EnumInfo {
+    public string _name;
+    public string[] _stringValues;
+    public int[] _intValues;
+}
 
-    [CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
-    public class EnumCreator : SingletonScriptableObject<EnumCreator> {
-#if UNITY_EDITOR
-        public static char whiteSpaceReplacement = '_';
+public interface IEnumContainer {
+    EnumInfo[] GetEnums();
+}
+
+[CreateAssetMenu(menuName = "Enum Generator/Enum Creator")]
+public class EnumCreator : SingletonScriptableObject<EnumCreator> {
+    public static char whiteSpaceReplacement = '_';
+
 
         [System.Serializable]
         public struct EnumValRef {
@@ -32,7 +37,7 @@ namespace BetaJester.EnumGenerator {
         [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
         [SerializeField] UnityEngine.Object[] _enumContainers;
         [SerializeField] bool _isInitialised = false;
-
+#if UNITY_EDITOR
         public void OnEnable() {
 
             if (_isInitialised) {
@@ -45,7 +50,7 @@ namespace BetaJester.EnumGenerator {
 { 
                 _isInitialised = true;
                 CreateEnums();
-                string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+                string definesString = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
                 List<string> allDefines = definesString.Split(';').ToList();
                 allDefines.Add("ENUMS_GENERATED");
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, string.Join(";", allDefines.ToArray()));
@@ -100,7 +105,7 @@ namespace BetaJester.EnumGenerator {
                 _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)).Where(x => x != null).Select(x => x as UnityEngine.Object).ToArray());
 
                 for (int i = 0; i < _enumContainers.Length; i++) {
-                    
+
                     ScriptableObject so = _enumContainers[i] as ScriptableObject;
 
                     IEnumContainer enumContainer = so as IEnumContainer;
@@ -189,15 +194,6 @@ namespace BetaJester.EnumGenerator {
 
 
         }
-
-        private int GetEnumIntMaxVal(string enumName) {
-            if (_createdValues.Any(x => x.enumName == enumName))
-                return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
-            else
-                return -1;
-        }
-
-#if UNITY_EDITOR
         [MenuItem("Enum Creator/Regenerate Enums %e")]
         public static void RegenerateEnums() {
             //EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
@@ -214,9 +210,18 @@ namespace BetaJester.EnumGenerator {
 
             EnumCreator.Instance.CreateEnums();
         }
+#endif
 
+        
+        private int GetEnumIntMaxVal(string enumName) {
+            if (_createdValues.Any(x => x.enumName == enumName))
+                return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
+            else
+                return -1;
+        }
 
-        public static T[] GetAllInstances<T>() where T : ScriptableObject {
+#if UNITY_EDITOR
+    public static T[] GetAllInstances<T>() where T : ScriptableObject {
             string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);  //FindAssets uses tags check documentation for more info
             T[] a = new T[guids.Length];
             for (int i = 0; i < guids.Length; i++)         //probably could get optimized 
@@ -228,43 +233,41 @@ namespace BetaJester.EnumGenerator {
             return a;
 
         }
+
+
 #endif
-        public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible {
-            if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
-            if (string.IsNullOrEmpty(value)) return defaultValue;
+
+    public static T StringToEnum<T>(string value, T defaultValue) where T : struct, IConvertible {
+        if (!typeof(T).IsEnum) throw new ArgumentException("T must be an enumerated type");
+        if (string.IsNullOrEmpty(value)) return defaultValue;
 
 
-            string replacedValue = value.Replace(' ', whiteSpaceReplacement);
+        string replacedValue = value.Replace(' ', whiteSpaceReplacement);
 
-            foreach (T item in Enum.GetValues(typeof(T))) {
+        foreach (T item in Enum.GetValues(typeof(T))) {
 #if UNITY_2021_1_OR_NEWER
-                if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
+            if (item.ToString().Equals(replacedValue.Trim(), StringComparison.InvariantCultureIgnoreCase)) return item;
 #else
                 if (item.ToString().ToLower().Equals(replacedValue.Trim().ToLower())) return item;
 #endif
-            }
-            return defaultValue;
         }
-
-        public static string EnumToString<T>(T value) {
-            string stringValue = Enum.GetName(typeof(T), value);
-            return stringValue.Replace(whiteSpaceReplacement, ' ');
-        }
-
-        public static bool ContainsAny(string haystack, params string[] needles) {
-            foreach (string needle in needles) {
-                if (haystack.Contains(needle))
-                    return true;
-            }
-
-            return false;
-        }
-
+        return defaultValue;
     }
 
-    public interface IEnumContainer {
-        EnumInfo[] GetEnums();
+    public static string EnumToString<T>(T value) {
+        string stringValue = Enum.GetName(typeof(T), value);
+        return stringValue.Replace(whiteSpaceReplacement, ' ');
     }
 
-#endif
+    public static bool ContainsAny(string haystack, params string[] needles) {
+        foreach (string needle in needles) {
+            if (haystack.Contains(needle))
+                return true;
+        }
+
+        return false;
+    }
+
 }
+
+
