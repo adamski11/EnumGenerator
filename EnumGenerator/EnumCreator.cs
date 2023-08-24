@@ -25,214 +25,165 @@ public class EnumCreator : SingletonScriptableObject<EnumCreator> {
     public static char whiteSpaceReplacement = '_';
 
 
-        [System.Serializable]
-        public struct EnumValRef {
-            public string enumName;
-            public string enumVal;
-            public int enumIntVal;
-        }
+    [System.Serializable]
+    public struct EnumValRef {
+        public string enumName;
+        public string enumVal;
+        public int enumIntVal;
+    }
 
-        [SerializeField] string _namespaceName = "";
-        [SerializeField] string _filePathOverride = "";
-        [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
-        [SerializeField] UnityEngine.Object[] _enumContainers;
-        [SerializeField] bool _isInitialised = false;
+    [SerializeField] string _namespaceName = "";
+    [SerializeField] string _filePathOverride = "";
+    [SerializeField] List<EnumValRef> _createdValues = new List<EnumValRef>();
+    [SerializeField] UnityEngine.Object[] _enumContainers;
+    [SerializeField] bool _isInitialised = false;
 #if UNITY_EDITOR
-        public void OnEnable() {
+    public void OnEnable() {
 
-            if (_isInitialised) {
-                string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-                List<string> allDefines = definesString.Split(';').ToList();
-                _isInitialised = allDefines.Contains("ENUMS_GENERATED");
+        if (_isInitialised) {
+            string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            List<string> allDefines = definesString.Split(';').ToList();
+            _isInitialised = allDefines.Contains("ENUMS_GENERATED");
+        }
+
+        if (!_isInitialised) {
+            _isInitialised = true;
+            CreateEnums();
+            string definesString = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            List<string> allDefines = definesString.Split(';').ToList();
+            allDefines.Add("ENUMS_GENERATED");
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, string.Join(";", allDefines.ToArray()));
+        }
+    }
+
+    public void CreateEnums() {
+
+
+        if (!_isInitialised) {
+            OnEnable();
+        }
+        string fileName = "GeneratedEnums";
+        string fileNameSpace = _namespaceName.Count() > 0 ? _namespaceName + ".Enums" : "";
+        List<List<string>> sectionsToGenerate = new List<List<string>>();
+
+        List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
+        _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)).Where(x => x != null).Select(x => x as UnityEngine.Object).ToArray());
+
+        for (int i = 0; i < _enumContainers.Length; i++) {
+
+            ScriptableObject so = _enumContainers[i] as ScriptableObject;
+
+            IEnumContainer enumContainer = so as IEnumContainer;
+
+
+            if (enumContainer == null) {
+                GameObject enumGO = _enumContainers[i] as GameObject;
+
+                enumsToGenerate.AddRange(enumGO.GetComponent<IEnumContainer>().GetEnums().ToList());
             }
-
-            if (!_isInitialised)
-{ 
-                _isInitialised = true;
-                CreateEnums();
-                string definesString = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-                List<string> allDefines = definesString.Split(';').ToList();
-                allDefines.Add("ENUMS_GENERATED");
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, string.Join(";", allDefines.ToArray()));
+            else {
+                enumsToGenerate.AddRange(enumContainer.GetEnums().ToList());
             }
         }
 
-        public void CreateEnums() {
+        for (int i = 0; i < enumsToGenerate.Count; i++) {
+
+            if (enumsToGenerate[i]._name == "") continue;
+
+            List<string> enumCodeSection = new List<string>();
+
+            enumCodeSection.Add("[System.Serializable]");
+            enumCodeSection.Add("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
+
+            string[] uniqueValues = enumsToGenerate[i]._stringValues.Distinct().ToArray();
+            int[] uniqueIntValues = new int[0];
+
+            if (enumsToGenerate[i]._intValues != null)
+                uniqueIntValues = enumsToGenerate[i]._intValues.Distinct().ToArray();
+
+            for (int j = 0; j < uniqueValues.Length; j++) {
+                if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" })) {
+                    Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + uniqueValues[j]);
+                    enumCodeSection.Add("}");
+                    enumCodeSection.Add(" ");
+                    enumCodeSection.Add("}");
+                    //AssetDatabase.Refresh();
+                    return;
+                }
+
+                if (uniqueValues[j] == " ") {
+                    Debug.Log("Value " + j + " is blank, skipping: " + enumsToGenerate[i]._name);
+                    continue;
+                }
+
+                string enumName = uniqueValues[j].Replace(' ', whiteSpaceReplacement);
+                int inEnumIntVal = uniqueIntValues.Length > j ? uniqueIntValues[j] : -1000;
 
 
-            if (!_isInitialised) {
-                OnEnable();
-            }
+                if (enumName.Length == 0)
+                    continue;
 
-            //EnumCreator[] enumCreators = ScriptableObjectUtility.GetAllInstances<EnumCreator>();
+                if (int.TryParse(enumName[0].ToString(), out int _)) {
+                    enumName = "_" + enumName;
+                }
 
-            //if (enumCreators.Count() == 0)
-            //  return;
-
-            //string saveLocation = AssetDatabase.GetAssetPath(enumCreators.First());
-            //saveLocation = saveLocation.Substring(0, saveLocation.Length - 17);
-
-            string fileName = "GeneratedEnums";
-
-            //string generatedFilePath = saveLocation;
+                EnumValRef enumValRef = new EnumValRef() {
+                    enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
+                    enumVal = enumName,
+                    enumIntVal = inEnumIntVal != -1000 ? inEnumIntVal : GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
+                };
 
 
-
-            string GetFilePathOverride() {
-                if (_filePathOverride.Last() == '/' || _filePathOverride.Last() == '\'')
-                    return _filePathOverride;
-                else
-                    return _filePathOverride + "/";
-            }
-
-
-            string copyPath = _filePathOverride == "" ? "Assets/Generated/" + fileName + ".cs" : GetFilePathOverride() + fileName + ".cs";
-            Debug.Log("Creating Classfile: " + copyPath);
-
-            using (StreamWriter enumFile =
-                new StreamWriter(copyPath)) {
-                enumFile.WriteLine("using UnityEngine;");
-                enumFile.WriteLine("using System.Collections;");
-                enumFile.WriteLine("");
-                enumFile.WriteLine("//This class is auto-generated, please do not edit it as your changes will be lost");
-
-                if (_namespaceName.Count() > 0)
-                    enumFile.WriteLine("namespace " + _namespaceName + ".Enums {");
-
-                enumFile.WriteLine(" ");
-
-                List<EnumInfo> enumsToGenerate = new List<EnumInfo>();
-                _enumContainers = (ScriptableObjectUtility.GetAllInstances<ScriptableObject>(typeof(IEnumContainer)).Where(x => x != null).Select(x => x as UnityEngine.Object).ToArray());
-
-                for (int i = 0; i < _enumContainers.Length; i++) {
-
-                    ScriptableObject so = _enumContainers[i] as ScriptableObject;
-
-                    IEnumContainer enumContainer = so as IEnumContainer;
-
-
-                    if (enumContainer == null) {
-                        GameObject enumGO = _enumContainers[i] as GameObject;
-
-                        enumsToGenerate.AddRange(enumGO.GetComponent<IEnumContainer>().GetEnums().ToList());
-                    }
-                    else {
-                        enumsToGenerate.AddRange(enumContainer.GetEnums().ToList());
-                    }
+                if (_createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
+                    inEnumIntVal = _createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
+                else {
+                    inEnumIntVal = enumValRef.enumIntVal;
+                    _createdValues.Add(enumValRef);
                 }
 
 
-
-                for (int i = 0; i < enumsToGenerate.Count; i++) {
-
-                    if (enumsToGenerate[i]._name == "") continue;
-
-                    enumFile.WriteLine("[System.Serializable]");
-                    enumFile.WriteLine("public enum " + enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement) + " {");
-
-                    string[] uniqueValues = enumsToGenerate[i]._stringValues.Distinct().ToArray();
-                    int[] uniqueIntValues = new int[0];
-
-                    if (enumsToGenerate[i]._intValues != null)
-                        uniqueIntValues = enumsToGenerate[i]._intValues.Distinct().ToArray();
-
-                    for (int j = 0; j < uniqueValues.Length; j++) {
-                        if (ContainsAny(uniqueValues[j], new string[] { "-", "'", "?", "!", "{", "}" })) {
-                            Debug.LogError("Cannot have anything other than a-z, A-Z, 0-9, and spaces in value name. Halting generation on: " + uniqueValues[j]);
-                            enumFile.WriteLine("}");
-                            enumFile.WriteLine(" ");
-                            enumFile.WriteLine("}");
-                            AssetDatabase.Refresh();
-                            return;
-                        }
-
-                        if (uniqueValues[j] == " ") {
-                            Debug.Log("Value " + j + " is blank, skipping: " + enumsToGenerate[i]._name);
-                            continue;
-                        }
-
-                        string enumName = uniqueValues[j].Replace(' ', whiteSpaceReplacement);
-                        int inEnumIntVal = uniqueIntValues.Length > j ? uniqueIntValues[j] : -1000;
-
-
-                        if (enumName.Length == 0)
-                            continue;
-
-                        if (int.TryParse(enumName[0].ToString(), out int _)) {
-                            enumName = "_" + enumName;
-                        }
-
-                        EnumValRef enumValRef = new EnumValRef() {
-                            enumName = enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement),
-                            enumVal = enumName,
-                            enumIntVal = inEnumIntVal != -1000 ? inEnumIntVal : GetEnumIntMaxVal(enumsToGenerate[i]._name.Replace(' ', whiteSpaceReplacement)) + 1
-                        };
-
-
-                        if (_createdValues.Any(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal))
-                            inEnumIntVal = _createdValues.First(x => x.enumName == enumValRef.enumName && x.enumVal == enumValRef.enumVal).enumIntVal;
-                        else {
-                            inEnumIntVal = enumValRef.enumIntVal;
-                            _createdValues.Add(enumValRef);
-                        }
-
-
-                        enumFile.WriteLine(enumName + " = " + inEnumIntVal + ",");
-                    }
-
-                    enumFile.WriteLine("}");
-                    enumFile.WriteLine(" ");
-                }
-
-                if (_namespaceName.Count() > 0)
-                    enumFile.WriteLine("}");
+                enumCodeSection.Add(enumName + " = " + inEnumIntVal + ",");
             }
 
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssetIfDirty(this);
-            AssetDatabase.Refresh();
-
+            enumCodeSection.Add("}");
+            enumCodeSection.Add(" ");
+            sectionsToGenerate.Add(enumCodeSection);
 
         }
-        [MenuItem("Enum Creator/Regenerate Enums %e")]
-        public static void RegenerateEnums() {
-            //EnumCreator[] enumCreators = GetAllInstances<EnumCreator>();
 
-            //if (enumCreators.Count() == 0) {
-            //    if (!AssetDatabase.IsValidFolder("Assets/Generated")) AssetDatabase.CreateFolder("Assets", "Generated");
+        ScriptGenerator.GenerateScriptFile(this, fileName, fileNameSpace, sectionsToGenerate);
 
-            //    ScriptableObjectUtility.CreateAsset<EnumCreator>("Assets/Generated", "EnumCreator", (s) => { s.CreateEnums(); return true; });
+    }
 
-            //}
-            //else {
-            //    enumCreators.First().CreateEnums();
-            //}
+  
 
-            EnumCreator.Instance.CreateEnums();
-        }
+    [MenuItem("Enum Creator/Regenerate Enums %e")]
+    public static void RegenerateEnums() {
+        EnumCreator.Instance.CreateEnums();
+    }
 #endif
 
-        
-        private int GetEnumIntMaxVal(string enumName) {
-            if (_createdValues.Any(x => x.enumName == enumName))
-                return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
-            else
-                return -1;
-        }
+
+    private int GetEnumIntMaxVal(string enumName) {
+        if (_createdValues.Any(x => x.enumName == enumName))
+            return _createdValues.Where(x => x.enumName == enumName).OrderByDescending(x => x.enumIntVal).First().enumIntVal;
+        else
+            return -1;
+    }
 
 #if UNITY_EDITOR
     public static T[] GetAllInstances<T>() where T : ScriptableObject {
-            string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);  //FindAssets uses tags check documentation for more info
-            T[] a = new T[guids.Length];
-            for (int i = 0; i < guids.Length; i++)         //probably could get optimized 
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
-                a[i] = AssetDatabase.LoadAssetAtPath<T>(path);
-            }
-
-            return a;
-
+        string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);  //FindAssets uses tags check documentation for more info
+        T[] a = new T[guids.Length];
+        for (int i = 0; i < guids.Length; i++)         //probably could get optimized 
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            a[i] = AssetDatabase.LoadAssetAtPath<T>(path);
         }
+
+        return a;
+
+    }
 
 
 #endif
